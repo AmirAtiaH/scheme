@@ -1,6 +1,8 @@
 module parser
 
-import types { Node NNode NQuotedList NList NIdent NString NNumber NBool }
+import types { Node NNode NQuoted NList NIdent NString NNumber NBool }
+import errors { throw }
+
 
 struct Parser {
 mut:
@@ -13,7 +15,7 @@ pub fn parse(tkns []types.Token) NList {
 	mut prsr := Parser {
 		tkns: tkns
 	}
-	if prsr.peek(0).typ != .eof {
+	for prsr.peek(0).typ != .eof {
 		prsr.ast << prsr.parse_node()
 	}
 	return prsr.ast
@@ -45,14 +47,14 @@ pub fn (mut prsr Parser)parse_node() Node {
 					break
 				}
 				if prsr.peek(0).typ == .eof {
-					panic("expected )")
+					throw(prsr.peek(0).pos, "expected `)` but found the end of file")
 				}
 				list << prsr.parse_node()
 			}
 		}
 		.quote {
 			prsr.skip(1)
-			node.val = NQuotedList(prsr.parse_node())
+			node.val = NQuoted(prsr.parse_node())
 		}
 		.ident {
 			node.val = NIdent(prsr.peek(0).val as string)
@@ -70,7 +72,7 @@ pub fn (mut prsr Parser)parse_node() Node {
 			node.val = NBool(prsr.peek(0).val as bool)
 			prsr.skip(1)
 		}
-		else { panic("get away") }
+		else { throw(prsr.peek(0).pos, "unexpected: `${prsr.peek(0).typ}`") }
 	}
 	return node
 }

@@ -2,6 +2,7 @@ module lexer
 
 import types { None, Token, TokenType }
 import strconv { atof_quick }
+import errors { throw }
 
 struct Lexer {
 pub mut:
@@ -31,6 +32,22 @@ fn (mut lxr Lexer) add(typ TokenType) {
 }
 
 @[inline]
+fn (mut lxr Lexer) add_bool() {
+	mut value := false
+	match lxr.peek(1) {
+		`t` { value = true }
+		`f` { value = false }
+		else { throw(lxr.pos, "expected `t` or `f` not: `${lxr.peek(1).ascii_str()}`") }
+	}
+	lxr.tkns << Token{
+		typ: .val_bool
+		val: value
+		pos: lxr.pos
+	}
+	lxr.skip(2)
+}
+
+@[inline]
 fn (mut lxr Lexer) add_string() {
 	mut value := ""
 	mut pos := u16(1)
@@ -56,9 +73,9 @@ fn (mut lxr Lexer) add_number() {
 			if !doted {
 				doted = true
 			} else {
-				panic(lxr.pos)
+				throw(lxr.pos, "didnt expected anothe `.`")
 			}
-		} else if lxr.peek(pos) !in `0`..`9` {
+		} else if !lxr.peek(pos).is_digit() {
 			break
 		}
 		value += lxr.peek(pos).ascii_str()
@@ -103,6 +120,7 @@ pub fn tokenize(code string) []Token {
 			`'` { lxr.add(.quote) }
 			`(` { lxr.add(.start_bracket) }
 			`)` { lxr.add(.close_bracket) }
+			`#` { lxr.add_bool() }
 			`"` { lxr.add_string() }
 			`0`...`9` { lxr.add_number() }
 			` `, `\n`, `\t`, `\r` { lxr.skip(1) }

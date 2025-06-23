@@ -22,13 +22,13 @@ pub:
 	pos u32
 }
 
+pub type NBool = bool
 pub type NIdent = string
 pub type NString = string
 pub type NNumber = f64
-pub type NBool = bool
 pub type NList = []Node
-pub type NQuotedList = Node
-pub type NNode = NQuotedList | NList | NIdent | NString | NNumber | NBool
+pub type NQuoted = Node
+pub type NNode = NBool | NIdent | NString | NNumber | NList | NQuoted
 
 pub struct Node {
 	pub mut:
