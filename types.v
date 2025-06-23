@@ -21,3 +21,17 @@ pub:
 	val TokenValue
 	pos u32
 }
+
+pub type NIdent = string
+pub type NString = string
+pub type NNumber = f64
+pub type NBool = bool
+pub type NList = []Node
+pub type NQuotedList = Node
+pub type NNode = NQuotedList | NList | NIdent | NString | NNumber | NBool
+
+pub struct Node {
+	pub mut:
+	val NNode
+	pos u64
+}

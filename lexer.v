@@ -32,11 +32,11 @@ fn (mut lxr Lexer) add(typ TokenType) {
 
 @[inline]
 fn (mut lxr Lexer) add_string() {
-	mut value := ''
+	mut value := ""
 	mut pos := u16(1)
 	for lxr.peek(pos) != `"` {
+		value += lxr.peek(pos).ascii_str()
 		pos++
-		value += lxr.peek(pos).str()
 	}
 	lxr.tkns << Token{
 		typ: .val_string
@@ -61,7 +61,7 @@ fn (mut lxr Lexer) add_number() {
 		} else if lxr.peek(pos) !in `0`..`9` {
 			break
 		}
-		value += lxr.peek(pos).str()
+		value += lxr.peek(pos).ascii_str()
 		pos++
 	}
 	lxr.tkns << Token{
@@ -82,12 +82,12 @@ fn (mut lxr Lexer) add_ident() {
 	mut value := ''
 	mut pos := u16(0)
 	for valid_ident_char(lxr.peek(pos)) {
-		value += lxr.peek(pos).str()
+		value += lxr.peek(pos).ascii_str()
 		pos++
 	}
 	lxr.tkns << Token{
-		typ: .val_number
-		val: atof_quick(value)
+		typ: .ident
+		val: value
 		pos: lxr.pos
 	}
 	lxr.skip(u16(value.len))
@@ -99,14 +99,16 @@ pub fn tokenize(code string) []Token {
 	}
 	for {
 		match lxr.peek(0) {
-			0 { break }
+			0 { lxr.add(.eof); break }
 			`'` { lxr.add(.quote) }
 			`(` { lxr.add(.start_bracket) }
 			`)` { lxr.add(.close_bracket) }
 			`"` { lxr.add_string() }
 			`0`...`9` { lxr.add_number() }
+			` `, `\n`, `\t`, `\r` { lxr.skip(1) }
 			else { lxr.add_ident() }
 		}
 	}
+
 	return lxr.tkns
 }
