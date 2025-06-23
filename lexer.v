@@ -22,6 +22,13 @@ fn (mut lxr Lexer) skip(l u16) {
 }
 
 @[inline]
+fn (mut lxr Lexer) skip_line() {
+	for !(lxr.peek(0) in [`\n`, 0]) {
+		lxr.skip(1)
+	}
+}
+
+@[inline]
 fn (mut lxr Lexer) add(typ TokenType) {
 	lxr.tkns << Token{
 		typ: typ
@@ -89,6 +96,7 @@ fn (mut lxr Lexer) add_number() {
 	lxr.skip(u16(value.len))
 }
 
+@[inline]
 fn valid_ident_char(c u8) bool {
 	return c.is_letter() || c.is_digit()
 		|| c in [`!`, `$`, `%`, `&`, `*`, `+`, `-`, `.`, `/`, `:`, `<`, `=`, `>`, `?`, `^`, `_`, `~`]
@@ -124,9 +132,9 @@ pub fn tokenize(code string) []Token {
 			`"` { lxr.add_string() }
 			`0`...`9` { lxr.add_number() }
 			` `, `\n`, `\t`, `\r` { lxr.skip(1) }
+			`;` { lxr.skip_line() }
 			else { lxr.add_ident() }
 		}
 	}
-
 	return lxr.tkns
 }
