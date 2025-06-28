@@ -14,6 +14,6 @@ fn main() {
 
 	close := time.now().unix_nano()
 
-	println((close - start)/1000000)
+	println((close - start))
 	unsafe { free(ast) }
 }
