@@ -21,9 +21,9 @@ fn (mut prsr Parser) skip_unneeded() {
 
 // token
 @[inline]
-fn (mut par Parser) lex_char(typ TokenType) Token {
+fn (mut par Parser) lex_char(typ NKind) Node {
 	par.pos++
-	return Token{
+	return Node{
 		typ: typ
 		pos: par.pos - 1
 		end: par.pos
@@ -32,10 +32,10 @@ fn (mut par Parser) lex_char(typ TokenType) Token {
 
 // bool
 @[inline]
-fn (mut par Parser) lex_bool() Token {
+fn (mut par Parser) lex_bool() Node {
 	par.pos += 2
-	return Token{
-		typ: .vbool
+	return Node{
+		typ: .nbool
 		pos: par.pos - 2
 		end: par.pos
 	}
@@ -51,22 +51,32 @@ fn valid_number_char(ch u8) bool {
 }
 
 @[inline]
-fn (mut par Parser) lex_number() Token {
-	//mut dot := false
+fn (mut par Parser) lex_number() Node {
 	mut start := par.pos
+	mut dot := false
 
-	for {
-		ch := par.source[par.pos]
+	for i := par.pos; i < par.source.len; i++ {
+		ch := par.source[i]
 
 		if !valid_number_char(ch) {
 			break
 		}
 
+		if ch == `.` {
+			if dot {
+				par.throw(i, i + 1, "unexpected second `.` in number")
+			}
+			dot = true
+		}
+		if ch == `-` && i != start {
+			par.throw(i, i + 1, "unexpected `-` in middle of number")
+		}
+
 		par.pos++
 	}
 
-	return Token{
-		typ: .vnumber
+	return Node{
+		typ: .nnumber
 		pos: start
 		end: par.pos
 	}
@@ -74,7 +84,7 @@ fn (mut par Parser) lex_number() Token {
 
 // string
 @[inline]
-fn (mut par Parser) lex_string() Token {
+fn (mut par Parser) lex_string() Node {
 	par.pos++
 	mut start := par.pos
 
@@ -82,13 +92,14 @@ fn (mut par Parser) lex_string() Token {
 		par.pos++
 	}
 
+	par.pos ++
+
 	if par.pos >= par.source.len {
-		throw(start, "unterminated string")
+		par.throw(start, par.pos, "unterminated string")
 	}
 
-	par.pos ++
-	return Token{
-		typ: .vstring
+	return Node{
+		typ: .nstring
 		pos: start - 1
 		end: par.pos
 	}
@@ -104,28 +115,28 @@ fn valid_ident_char(ch u8) bool {
 }
 
 @[inline]
-fn (mut par Parser) lex_ident() Token {
+fn (mut par Parser) lex_ident() Node {
 	mut start := par.pos
 	for valid_ident_char(par.source[par.pos]) {
 		par.pos++
 	}
 	
-	return Token {
-		typ: .ident
+	return Node {
+		typ: .nident
 		pos: start
 		end: par.pos
 	}
 }
 
 
-pub fn (mut par Parser) lex() Token {
+pub fn (mut par Parser) lex() {
 	par.skip_unneeded()
 	ch := par.source[par.pos] or { 0 }
-	return match ch {
+	par.nodes << match ch {
 		0         { par.lex_char(.eof) }
-		`'`       { par.lex_char(.quote) }
-		`(`       { par.lex_char(.start_bracket) }
-		`)`       { par.lex_char(.close_bracket) }
+		`'`       { par.lex_char(.nquote) }
+		`(`       { par.lex_char(.nslist) }
+		`)`       { par.lex_char(.nclist) }
 		`#`       { par.lex_bool() }
 		`"`       { par.lex_string() }
 		`0`...`9` { par.lex_number() }

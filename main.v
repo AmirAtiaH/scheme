@@ -11,7 +11,10 @@ fn main() {
 	
 	start := time.now().unix_nano()
 
-	_ := parser.parse(code)
+	mut par := parser.Parser{
+		source: code
+	}
+	par.parse()
 
 	close := time.now().unix_nano()
 

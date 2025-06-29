@@ -1,69 +1,44 @@
 module parser
 
-struct Parser {
-mut:
-	ast     NList
+pub struct Parser {
+pub mut:
 	source  string
 	pos     u32
-	peek    Token
+	nodes   []Node
 }
 
-@[inline]
-pub fn (mut par Parser)next() {
-	par.peek = par.lex()
-}
+pub fn (mut par Parser) parse() {
+	par.nodes = [
+		Node {
+			typ: .root
+			pos: 0
+			end: 0
+		}
+	]
 
-@[inline]
-pub fn (mut par Parser)parse_node() Node {
-	mut node := Node {
-		pos: par.peek.pos
-	}
-	match par.peek.typ {
-		.start_bracket {
-			mut list := []Node{}
-			par.next()
-			for {
-				if par.peek.typ == .close_bracket {
-					node.val = NList(list)
-					par.next()
-					break
+	mut bracks := i16(0)
+	par.lex()
+
+	for {
+		tok := par.nodes.last()
+		if tok.typ == .eof {
+			break
+		}
+		match tok.typ {
+			.nslist { bracks++ }
+			.nclist { 
+				bracks-- 
+				if bracks < 0 {
+					par.throw(tok.pos, tok.end, "unexpected: `)`")
 				}
-				if par.peek.typ == .eof {
-					throw(par.peek.pos, "expected `)` but found the end of file")
-				}
-				list << par.parse_node()
 			}
+			else {}
 		}
-		.quote {
-			par.next()
-			node.val = NQuoted(par.parse_node())
-		}
-		.ident {
-			node.val = NIdent(par.get_string(par.peek))
-			par.next()
-		}
-		.vstring {
-			node.val = NString(par.get_string(par.peek))
-			par.next()
-		}
-		.vnumber {
-			node.val = NNumber(par.get_number(par.peek))
-			par.next()
-		}
-		.vbool {
-			node.val = NBool(par.get_bool(par.peek))
-			par.next()
-		}
-		else { throw(par.peek.pos, "unexpected: `${par.peek.typ}`") }
+		par.lex()
 	}
-	return node
-}
 
-pub fn parse(code string) NList {
-	mut par := Parser { source: code }
-	par.next()
-	for par.peek.typ != .eof {
-		par.ast << par.parse_node()
+	last := par.nodes.last()
+	if bracks > 0 {
+		par.throw(last.pos, last.end, "expected: `)` but found `eof`")
 	}
-	return par.ast
 }
