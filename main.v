@@ -3,17 +3,18 @@ module main
 import parser
 import os
 import time
+import math
 
 fn main() {
+
+	code := os.read_file(os.args[1]) or { panic("can access the file") }
 	
 	start := time.now().unix_nano()
 
-
-	ast := parser.parse(os.read_file(os.args[1]) or { panic("can access the file") })
-
+	_ := parser.parse(code)
 
 	close := time.now().unix_nano()
 
-	println((close - start))
-	unsafe { free(ast) }
+	//unsafe { free(ast) }
+	println((code.count('\n') / ((close - start) / math.pow(10, 9)))/ 1000 )
 }

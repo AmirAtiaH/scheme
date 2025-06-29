@@ -70,5 +70,42 @@ pub type NNode = NBool | NIdent | NString | NNumber | NList | NQuoted
 pub struct Node {
 	pub mut:
 	val NNode
-	pos u64
+	pos u32
 }
+
+
+
+
+
+
+
+
+
+
+/*
+
+enum NodeType as u8 {
+	nbool
+	nident
+	nstring
+	nnumber
+	nquoted
+	nslist
+	nclist
+}
+
+pub type NodeValue = string | f64 | bool
+
+
+pub struct Node {
+	pub mut:
+	typ NodeType
+	val NodeValue
+	pos u32
+}
+
+
+struct AST {
+	nodes []Node
+}
+*/
