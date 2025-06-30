@@ -46,46 +46,66 @@ fn (mut par Parser) lex_bool() Node {
 
 // number
 @[inline]
-fn valid_number_char(ch u8) bool {
-	return ch.is_digit() || match ch {
-		`.`, `-` { true }
-		else { false }
-	}
-}
-
-@[inline]
 fn (mut par Parser) lex_number() Node {
 	mut start := par.pos
+	src := par.source
+	len := src.len
+	mut i := start
+	mut dot := false
 
-	for valid_number_char(par.source[par.pos]) {
-		par.pos++
+	for i < len {
+		ch := src[i]
+
+		if ch >= `0` && ch <= `9` {
+			i++
+			continue
+		}
+
+		if ch == `.` {
+			if dot {
+				par.throw(i, i + 1, "unexpected second `.` in number")
+			}
+			dot = true
+			i++
+			continue
+		}
+
+		if ch == `-` && i != start {
+			par.throw(i, i + 1, "unexpected `-` in middle of number")
+		}
+
+		break
 	}
 
+	par.pos = i
 	return Node{
 		typ: .nnumber
 		pos: start
 	}
 }
 
+
 @[inline]
 fn (mut par Parser) lex_string() Node {
 	mut start := par.pos
 	par.pos++
 
-	for par.pos < par.source.len && par.source[par.pos] != `"` {
-		par.pos++
+	src := par.source
+	len := src.len
+	mut i := par.pos
+
+	for i < len {
+		if src[i] == `"` {
+			par.pos = i + 1
+			return Node{
+				typ: .nstring
+				pos: start
+			}
+		}
+		i++
 	}
 
-	if par.pos >= par.source.len {
-		par.throw(start, par.pos, "unterminated string")
-	}
-
-	par.pos++
-
-	return Node{
-		typ: .nstring
-		pos: start
-	}
+	par.throw(start, start + 2, "unterminated string")
 }
 
 // identifier
@@ -110,7 +130,6 @@ fn (mut par Parser) lex_ident() Node {
 		pos: start
 	}
 }
-
 
 pub fn (mut par Parser) lex() {
 	par.skip_unneeded()

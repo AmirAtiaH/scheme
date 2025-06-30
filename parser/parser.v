@@ -8,35 +8,49 @@ pub mut:
 }
 
 pub fn (mut par Parser) parse() {
-	par.nodes = []Node{ cap: par.source.len / 3 }
-	par.nodes << Node {
+	par.nodes = []Node{cap: par.source.len / 3}
+	par.nodes << Node{
 		typ: .root
 		pos: 0
 	}
 
 	mut bracks := i16(0)
-	par.lex()
 
 	for {
+		par.lex()
 		tok := par.nodes.last()
-		if tok.typ == .eof {
-			break
-		}
+		
 		match tok.typ {
-			.nslist { bracks++ }
-			.nclist { 
-				bracks-- 
+			.eof {
+				break
+			}
+			.nslist {
+				bracks++
+			}
+			.nclist {
+				bracks--
 				if bracks < 0 {
 					par.throw(tok.pos, tok.pos, "unexpected: `)`")
 				}
 			}
+			.nnumber {
+				par.as_number(tok.pos)
+			}
+			.nstring {
+				par.as_string(tok.pos)
+			}
+			.nbool {
+				par.as_bool(tok.pos)
+			}
+			.nident {
+				par.as_ident(tok.pos)
+			}
 			else {}
 		}
-		par.lex()
 	}
 
-	last := par.nodes.last()
 	if bracks > 0 {
+		last := par.nodes.last()
 		par.throw(last.pos, last.pos, "expected: `)` but found `eof`")
 	}
 }
