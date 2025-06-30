@@ -8,13 +8,11 @@ pub mut:
 }
 
 pub fn (mut par Parser) parse() {
-	par.nodes = [
-		Node {
-			typ: .root
-			pos: 0
-			end: 0
-		}
-	]
+	par.nodes = []Node{ cap: par.source.len / 3 }
+	par.nodes << Node {
+		typ: .root
+		pos: 0
+	}
 
 	mut bracks := i16(0)
 	par.lex()
@@ -29,7 +27,7 @@ pub fn (mut par Parser) parse() {
 			.nclist { 
 				bracks-- 
 				if bracks < 0 {
-					par.throw(tok.pos, tok.end, "unexpected: `)`")
+					par.throw(tok.pos, tok.pos, "unexpected: `)`")
 				}
 			}
 			else {}
@@ -39,6 +37,6 @@ pub fn (mut par Parser) parse() {
 
 	last := par.nodes.last()
 	if bracks > 0 {
-		par.throw(last.pos, last.end, "expected: `)` but found `eof`")
+		par.throw(last.pos, last.pos, "expected: `)` but found `eof`")
 	}
 }

@@ -20,4 +20,5 @@ fn main() {
 
 	//unsafe { free(ast) }
 	println((code.count('\n') / ((close - start) / math.pow(10, 9)))/ 1000 )
+	//println((close - start)/ 1000 )
 }

@@ -20,28 +20,55 @@ pub struct Node {
 	pub mut:
 	typ NKind
 	pos u32
-	end u32
+	//end u32
 }
 
-
 fn (par Parser) as_ident(i u32) string {
-	return par.source[par.nodes[i].pos..par.nodes[i].end]
+	mut end := i
+	for valid_ident_char(par.source[end]) { end++ }
+	return par.source[i..end]
 }
 
 fn (par Parser) as_string(i u32) string {
-	return par.source[par.nodes[i].pos + 1..par.nodes[i].end - 1]
+	mut end := i
+	for par.source[end] != `"` { end++ }
+	return par.source[i..end]
 }
 
 fn (par Parser) as_number(i u32) f64 {
-	mut val := par.source[par.nodes[i].pos..par.nodes[i].end]
-	return atof_quick(val)
+	mut end := i
+	mut dot := false
+
+	for {
+		ch := par.source[end]
+
+		if !valid_number_char(ch) {
+			break
+		}
+
+		if ch == `.` {
+			if dot {
+				par.throw(end, end + 1, "unexpected second `.` in number")
+			}
+			dot = true
+		}
+		if ch == `-` && end != i {
+			par.throw(i, i + 1, "unexpected `-` in middle of number")
+		}
+
+		end++
+	}
+	return atof_quick(par.source[i..end])
 }
 
 fn (par Parser) as_bool(i u32) bool {
-	value := par.source[par.nodes[i].pos + 1]
-	if value == `t` { return true }
-	if value == `f` { return false }
-	par.throw(par.nodes[i].pos, par.nodes[i].end, "expected `#t` or `#f`, but found `#${par.source[par.nodes[i].pos..par.nodes[i].end]}`")
+	return match par.source[i + 1] {
+		`t` { true }
+		`f` { false }
+		else {
+			par.throw(i, i + 2, "expected `#t` or `#f`, but found `#${par.source[i..i + 2]}`")
+		}
+	}
 }
 
 fn (par Parser) parent(i u32) u32 {

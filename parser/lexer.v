@@ -1,22 +1,27 @@
 module parser
 
-
 @[inline]
 fn (mut prsr Parser) skip_unneeded() {
-	for prsr.pos < prsr.source.len {
-		ch := prsr.source[prsr.pos]
-		if ch in [` `, `\t`, `\n`, `\r`] {
-			prsr.pos++
-			continue
-		}
-		if ch == `;` {
-			for prsr.pos < prsr.source.len && prsr.source[prsr.pos] != `\n` {
-				prsr.pos++
+	mut i := prsr.pos
+	src := prsr.source
+	len := src.len
+
+	for i < len {
+		ch := src[i]
+		match ch {
+			` `, `\t`, `\r`, `\n` {
+				i++
 			}
-			continue
+			`;` {
+				for i < len && src[i] != `\n` {
+					i++
+				}
+			}
+			else { break }
 		}
-		break
 	}
+
+	prsr.pos = i
 }
 
 // token
@@ -26,7 +31,6 @@ fn (mut par Parser) lex_char(typ NKind) Node {
 	return Node{
 		typ: typ
 		pos: par.pos - 1
-		end: par.pos
 	}
 }
 
@@ -37,7 +41,6 @@ fn (mut par Parser) lex_bool() Node {
 	return Node{
 		typ: .nbool
 		pos: par.pos - 2
-		end: par.pos
 	}
 }
 
@@ -53,55 +56,35 @@ fn valid_number_char(ch u8) bool {
 @[inline]
 fn (mut par Parser) lex_number() Node {
 	mut start := par.pos
-	mut dot := false
 
-	for i := par.pos; i < par.source.len; i++ {
-		ch := par.source[i]
-
-		if !valid_number_char(ch) {
-			break
-		}
-
-		if ch == `.` {
-			if dot {
-				par.throw(i, i + 1, "unexpected second `.` in number")
-			}
-			dot = true
-		}
-		if ch == `-` && i != start {
-			par.throw(i, i + 1, "unexpected `-` in middle of number")
-		}
-
+	for valid_number_char(par.source[par.pos]) {
 		par.pos++
 	}
 
 	return Node{
 		typ: .nnumber
 		pos: start
-		end: par.pos
 	}
 }
 
-// string
 @[inline]
 fn (mut par Parser) lex_string() Node {
-	par.pos++
 	mut start := par.pos
+	par.pos++
 
 	for par.pos < par.source.len && par.source[par.pos] != `"` {
 		par.pos++
 	}
 
-	par.pos ++
-
 	if par.pos >= par.source.len {
 		par.throw(start, par.pos, "unterminated string")
 	}
 
+	par.pos++
+
 	return Node{
 		typ: .nstring
-		pos: start - 1
-		end: par.pos
+		pos: start
 	}
 }
 
@@ -117,6 +100,7 @@ fn valid_ident_char(ch u8) bool {
 @[inline]
 fn (mut par Parser) lex_ident() Node {
 	mut start := par.pos
+
 	for valid_ident_char(par.source[par.pos]) {
 		par.pos++
 	}
@@ -124,7 +108,6 @@ fn (mut par Parser) lex_ident() Node {
 	return Node {
 		typ: .nident
 		pos: start
-		end: par.pos
 	}
 }
 
