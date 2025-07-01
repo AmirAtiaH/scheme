@@ -81,6 +81,7 @@ fn (mut par Parser) lex_number() Node {
 	return Node{
 		typ: .nnumber
 		pos: start
+		end: i
 	}
 }
 
@@ -100,6 +101,7 @@ fn (mut par Parser) lex_string() Node {
 			return Node{
 				typ: .nstring
 				pos: start
+				end: i + 1
 			}
 		}
 		i++
@@ -128,6 +130,7 @@ fn (mut par Parser) lex_ident() Node {
 	return Node {
 		typ: .nident
 		pos: start
+		end: par.pos
 	}
 }
 

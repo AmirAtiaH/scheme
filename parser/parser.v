@@ -15,7 +15,7 @@ pub fn (mut par Parser) parse() {
 	}
 
 	mut bracks := i16(0)
-
+	mut i := u32(1)
 	for {
 		par.lex()
 		tok := par.nodes.last()
@@ -34,19 +34,17 @@ pub fn (mut par Parser) parse() {
 				}
 			}
 			.nnumber {
-				par.as_number(tok.pos)
+				par.as_number(i)
 			}
 			.nstring {
-				par.as_string(tok.pos)
-			}
-			.nbool {
-				par.as_bool(tok.pos)
+				par.as_string(i)
 			}
 			.nident {
-				par.as_ident(tok.pos)
+				par.as_ident(i)
 			}
 			else {}
 		}
+		i++
 	}
 
 	if bracks > 0 {

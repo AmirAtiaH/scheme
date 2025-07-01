@@ -3,14 +3,16 @@ module main
 import parser
 import os
 import time
+import strconv { atof_quick }
 
 fn main() {
 
-	code := os.read_file(os.args[1]) or { panic("can access the file") }
+	code := os.read_file(os.args[2]) or { panic("can access the file") }
 
 	mut arr := []f64 {}
-
-	for _ in 0..20 {
+	times:= u32(atof_quick(os.args[1]))
+	
+	for _ in 0..times {
 		start := time.now().unix_nano()
 
 		mut par := parser.Parser{
