@@ -30,8 +30,9 @@ fn main() {
 	}
 	
 	mut total := f64(0)
-	for val in arr {
+	for i, val in arr {
 		total += val
+		println("${i+1}th speed: ${val:.2f} l/s")
 	}
 	avg := total / f64(arr.len)
 
